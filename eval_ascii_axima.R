@@ -3,7 +3,7 @@
 # Total number of peaks, number of phylogenetic marker masses detected (absolut and relativ) (every spectra is exclusively queried for the subunits of the relative genome), average distance of predicted to detected, mass with the highest m/z value, mass at the 90th percentile of m/z values, fraction of peaks > 10'000 Daltons.
 # The following input arguments are required:
 # (i) path to the file called 'positions.csv', a .csv file including the information which sample was measured on which run and position
-# (ii) directory to the ascii files (unique sample name) # spectra were extracted as 'mzXml' files and converted to ASCII files. The '.mzXml files' exclusively cover m/z and 'intensity' values assigned by the Shimadzu Launchpad Software
+# (ii) directory to the ascii files (unique sample name) eg.'./ASCII-Files-picked-peaks/Axima_Confidence/' # spectra were extracted as 'mzXml' files and converted to ASCII files. The '.mzXml files' exclusively cover m/z and 'intensity' values assigned by the Shimadzu Launchpad Software
 # (iii) path to the file 'predicted_masses.csv' including all predicted masses and produced by the script 'import_GAP.R'
 # (iv) path to the file 'Strains_numbering_first_Shihpment.csv'
 # (v) name and path of the summary output file (1 row per spectra)

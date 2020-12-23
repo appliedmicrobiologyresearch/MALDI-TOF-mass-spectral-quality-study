@@ -2,7 +2,7 @@
 # This script summarises the following information for the MALDI-TOF MS spectra, acquired of a microflex Biotyper system: 
 # Total number of peaks, number of phylogenetic marker masses detected (absolut and relativ) (every spectra is exclusively queried for the subunits of the relative genome), average distance of predicted to detected, mass with the highest m/z value, mass at the 90th percentile of m/z values, fraction of peaks > 10'000 Daltons.
 # The following input arguments are required:
-# (i) directory to ascii (common directory, eg "/Users/aline/ESCMID/ESPRIT/08_Data/01_Spectra/03_unique_asciis_for_PAPMID/specrta_test/") # Peak picking was performed using the default settings in the FlexAnalysis Software and exported as ASCII files
+# (i) directory to ascii (common directory, eg "./ASCII-Files-picked-peaks/microflex_Biotyper/") # Peak picking was performed using the default settings in the FlexAnalysis Software and exported as ASCII files
 # (ii) path to the file 'predicted_masses.csv' including all predicted masses and produced by the script 'import_GAP.R'
 # (iii) path to the file 'Strains_numbering_first_Shihpment.csv'
 # (iv) name and path of the summary output file (1 row per spectra)
@@ -190,7 +190,7 @@ read_out_each_su<-merge(subunit_detected_all_in_one_each_su, mass_detected_all_i
 read_out_each_su<-merge(read_out_each_su, mass_detected_all_in_one_each_su, by=c(intersect(colnames(read_out_each_su), colnames(mass_detected_all_in_one_each_su))))
 read_out_each_su<-merge(read_out_each_su, intensity_detected_all_in_one_each_su, by=c(intersect(colnames(read_out_each_su), colnames(intensity_detected_all_in_one_each_su))))
 
-# add distnace (measurement error) in Daltons and in ppm
+# add distance (measurement error) in Daltons and in ppm
 read_out_each_su['dist']<-abs(as.numeric(as.character(read_out_each_su$predicted_mass)) - as.numeric(as.character(read_out_each_su$detected_mass)))
 read_out_each_su['dist_ppm']<-(read_out_each_su$dist / as.numeric(as.character(read_out_each_su$predicted_mass))) *1000000
 

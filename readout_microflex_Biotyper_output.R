@@ -1,10 +1,10 @@
 # Aline Cuénod, 2020
-## This file reads in a html file and exports a .csv file summarising the the bruker species identification (one line per spectrum). It requires the folloing two arguments 
-## This file reads in a html file and exports a .csv file summarising the the bruker species identification (one line per spectrum). It requires the folloing three arguments 
+# This file reads in a html file, including the species identification results from the MALDI Bioytper databse, exported via FlexAnalysis. This script exports a .csv file summarising the the bruker species identification (one line per spectrum). 
+# It requires the folloing four arguments: 
 # (i) input path to the html file
 # (ii) .csv file saying whihc run belongs to which repetition
 # (iii) Input file which shich strainnumber is which species per NGS.
-# (iii) output file to the csv file
+# (iv) output file to the csv file
 
 library(data.table)
 library(dplyr)

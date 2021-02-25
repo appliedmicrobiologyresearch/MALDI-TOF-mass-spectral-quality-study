@@ -13,7 +13,7 @@
 # Besides these files, this script requires the following metadata file
 # 'Strains_groups_assigned.csv' indicating which strain belongs to which group
 
-setwd('')
+setwd('/Users/aline/ESCMID/ESPRIT/')
 
 # load packages
 library('ggplot2')
@@ -26,11 +26,12 @@ library('gridExtra')
 library('cowplot')
 
 #import which strain belonges to which group
-groups<-read.csv2('./04_Strains/Strains_groups_assigned.csv', sep=',')
+groups<-read.csv2('./04_Strains/Strains_groups_assigned_2021_02.csv', sep=',')
 groups['Numbering_Shipment_1']<-ifelse(nchar(groups$Numbering_Shipment_1)==1, paste0('0', groups$Numbering_Shipment_1), groups$Numbering_Shipment_1)
 
 #import Vitek MS evaluation
 eval_shimadzu<-read.csv2('./08_Data/01_Spectra/04_outputs/spectra_test/read_out_sum_shimadzu_spectra_test_2021.csv')
+eval_shimadzu$Strain<-gsub('Bordetella\\_parapertussis\\_502474\\-16', 'Bordetella_bronchiseptica_502474-16', eval_shimadzu$Strain)
 
 eval_shimadzu['MALDI']<-'Axima Confidence'
 
@@ -46,6 +47,7 @@ colnames(eval_shimadzu)[colnames(eval_shimadzu) == "strain_number"] <- "strainnu
 
 # Import Microflex evaluation
 eval_bruker<-read.csv2('./08_Data/01_Spectra/04_outputs/spectra_test/read_out_sum_microflex_spectra_test_2021.csv')
+eval_bruker$Strain<-gsub('Bordetella\\_parapertussis\\_502474\\-16', 'Bordetella_bronchiseptica_502474-16', eval_bruker$Strain)
 
 eval_bruker['MALDI']<-'microflex Biotyper'
 
@@ -100,7 +102,7 @@ eval_bruker<-eval_bruker[!(eval_bruker$Method == 'j6' & eval_bruker$strainnumber
 
 # Add the species identification by the MALDI Biotyper database. The outputs were saved as '.html' files and convrted into .csv files with the script 'readout_microflex_Biotyper_output.R'
 # define path to were the outputs are stored
-path_brukerrep = './08_Data/01_Spectra/04_outputs/spectra_test/brukerreport_eval/'
+path_brukerrep = './08_Data/01_Spectra/04_outputs/spectra_test/brukerreport_eval_2021/'
 
 # read in all output files
 files<-list.files(path_brukerrep, pattern ='.csv')
@@ -142,8 +144,8 @@ eval['quantity']<-gsub('4', '1', eval$quantity)
 eval['quantity']<-gsub('1-1565', '1-15625', eval$quantity)
 
 # Add identification by a marker based database. Each phylogenetic group has been analysed separately and the database outputs were summarised using the script 'summarise_marker_based_args.R'
-marker.ID.Shimadzu<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/marker_based_ID_shimadzu_spectra_test_clean.csv', stringsAsFactors = FALSE)
-marker.ID.microflex<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/marker_based_ID_micoflex_spectra_test_clean.csv', stringsAsFactors = FALSE)
+marker.ID.Shimadzu<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/marker_based_ID_shimadzu_spectra_test_clean_02_2021.csv', stringsAsFactors = FALSE)
+marker.ID.microflex<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/marker_based_ID_micoflex_spectra_test_clean_02_2021.csv', stringsAsFactors = FALSE)
 
 # merge the database outputs for spectra acquired on two devices
 marker.ID<-merge(marker.ID.microflex, marker.ID.Shimadzu, by=intersect(colnames(marker.ID.microflex), colnames(marker.ID.Shimadzu)), all = TRUE)
@@ -164,6 +166,13 @@ marker.ID['sample']<-gsub('\\.1$', '', marker.ID$sample)
 # Some spectra did not yield a marker based ID, because they were excluded by the marker based classifier (e.g. because less than the group specific threshold of marker masses were detected)
 # Check how many did not yield a marker basd ID and whether this is within the expected range
 check<-eval[eval$spectra %in% setdiff(eval$spectra, marker.ID$sample),]
+#write.table(check, '/Users/aline/ESCMID/ESPRIT/09_Scripts/github/2021-02/marker.ID.missing.txt', row.names = F, quote = T, sep = ';')
+
+# find specrta which are missing in PAPMID output. >Exclude strains who where in calssifier
+#check_PAPMID_missing<-check[!check$strainnumber %in% c('1','2','3','4','5','6','17', '18', '19', '20', '21', '22', '23', '24', '25', '29','35', '36', '37', '38', '39', '40', '41'),]
+#check_Classifier_missing<-check[check$spectra %in% setdiff(check$spectra, check_PAPMID_missing$spectra),]
+
+
 table(check$MALDI, check$Method) # These are within the expected range of the identification using PAPMID not giving an ID. We also double checked, whether these were in the input
 
 # Add '0' to all one digit strainnumbers
@@ -207,7 +216,7 @@ eval$marker.theshold<-NULL
 
 # Add Species identification by the VitekMS database (only available for spectra acquired on the Axima Confidence device). Spectra were received as .xlsx / .csv files and summarised using the script 'readout_VitekMS_ID.R'
 # Import files
-VitekMS_report_dir<-'./08_Data/01_Spectra/04_outputs/spectra_test/testspectra_axima/'
+VitekMS_report_dir<-'./08_Data/01_Spectra/04_outputs/spectra_test/testspectra_axima_2021/'
 vitekMS_filnames <- list.files(VitekMS_report_dir)
 vitekMS_list <- lapply(paste0(VitekMS_report_dir, vitekMS_filnames), read.csv, sep=';')
 VitekMS_reports <- do.call(rbind, vitekMS_list)
@@ -391,7 +400,7 @@ eval_prop_long$classification_eval_prop<-NULL
 plot_data<-merge(plot_data, eval_prop_long, by = intersect(colnames(eval_prop_long), colnames(plot_data)), all = TRUE)
 
 # write out
-write.csv(plot_data, './08_Data/01_Spectra/04_outputs/plot_data_long_2021.csv')
+write.csv(plot_data, './08_Data/01_Spectra/04_outputs/plot_data_long_2021_2.csv')
 
 # Add an 'Experiment' column for easier subsetting into the respective datasets
 plot_data['experiment']<-ifelse(!is.na(plot_data$sampleprep), 'Sample prepreration', 
@@ -564,7 +573,7 @@ combined_plots<-cowplot::plot_grid(f7_samplprep_all + theme(legend.position="non
 
 
 # Export the plot
-pdf('./01_Drafts/bruker_overall_nobrukerID_no_quantity_2021.pdf', height = 16, width = 11.25)
+pdf('./01_Drafts/bruker_overall_nobrukerID_no_quantity_2021_2.pdf', height = 16, width = 11.25)
 plot_grid(combined_plots, leg.marker, ncol = 1, rel_heights = c(0.9, 0.1))
 dev.off()
 
@@ -605,7 +614,7 @@ plot_data_bruker_quantity_all_groups <- ggplot(plot_data_bruker_quantity1[!grepl
   scale_fill_brewer(palette = "Blues", direction=-1)
 
 # Export the plot
-pdf('./01_Drafts/bruker_quantity_all_groups_2021.pdf', height = 12, width = 5)
+pdf('./01_Drafts/bruker_quantity_all_groups_2021_2.pdf', height = 12, width = 5)
 plot_data_bruker_quantity_all_groups
 dev.off()
 
@@ -639,7 +648,7 @@ plot_data_bruker_quantity_per_group <- ggplot(plot_data_bruker_quantity1[!grepl(
   scale_fill_brewer(palette = "Blues", direction=-1)
 
  # Export the plot
-pdf('./01_Drafts/bruker_quantity_per_groups_2021.pdf', height = 12, width = 16)
+pdf('./01_Drafts/bruker_quantity_per_groups_2021_2.pdf', height = 12, width = 16)
 plot_data_bruker_quantity_per_group
 dev.off()
 
@@ -655,7 +664,7 @@ plot_data_bruker_quantity_enterobacteriaceae <- ggplot(plot_data_bruker_quantity
   geom_vline(xintercept= 1.5, colour = "black", linetype = "dashed", size = 0.4) + ggtitle('Dilution Series') + theme(axis.text=element_text(size=15), axis.title=element_text(size=20),title=element_text(size=15), strip.text = element_text(size=12), legend.position = 'none') +
   scale_fill_brewer(palette = "Blues", direction=-1)
 # Export the plot
-pdf('./01_Drafts/bruker_quantity_per_groups_entero_2021.pdf', height = 9.6, width = 3.5)
+pdf('./01_Drafts/bruker_quantity_per_groups_entero_2021_2.pdf', height = 9.6, width = 3.5)
 plot_data_bruker_quantity_enterobacteriaceae
 dev.off()
 
@@ -672,7 +681,7 @@ plot_data_bruker_quantity_burko <- ggplot(plot_data_bruker_quantity1_burko[!grep
   scale_fill_brewer(palette = "Blues", direction=-1)
 
 # Export the plot
-pdf('./01_Drafts/bruker_quantity_per_groups_burko_2021.pdf', height = 9.6, width = 3.5)
+pdf('./01_Drafts/bruker_quantity_per_groups_burko_2021_2.pdf', height = 9.6, width = 3.5)
 plot_data_bruker_quantity_burko
 dev.off()
 
@@ -689,7 +698,7 @@ plot_data_bruker_quantity_strep <- ggplot(plot_data_bruker_quantity1_strep[!grep
   scale_fill_brewer(palette = "Blues", direction=-1)
 
 # Export the plot
-pdf('./01_Drafts/bruker_quantity_per_groups_strep_2021.pdf', height = 9.6, width = 3.5)
+pdf('./01_Drafts/bruker_quantity_per_groups_strep_2021_2.pdf', height = 9.6, width = 3.5)
 plot_data_bruker_quantity_strep
 dev.off()
 
@@ -769,7 +778,7 @@ combined_plots<-cowplot::plot_grid(f7_samplprep_all + theme(legend.position="non
                                    rel_widths=c(0.125, 0.2), ncol = 2, align = "h",axis = "b")
 
 # Output the combine figure
-pdf('./01_Drafts/axima_overall_noVitekMS_no_quantity_2021.pdf', height = 16, width = 11.25)
+pdf('./01_Drafts/axima_overall_noVitekMS_no_quantity_2021_2.pdf', height = 16, width = 11.25)
 plot_grid(combined_plots, leg.marker, ncol = 1, rel_heights = c(0.9, 0.1))
 dev.off()
 
@@ -831,7 +840,7 @@ plot_data_axima_quantity_per_group <- ggplot(plot_data_axima_quantity1[!grepl('E
   geom_vline(xintercept= 1.5, colour = "black", linetype = "dashed", size = 0.4) + ggtitle('Dilution Series') + theme(axis.text=element_text(size=15), axis.title=element_text(size=20),title=element_text(size=15), strip.text = element_text(size=12), legend.position = 'none') +
   scale_fill_brewer(palette = "Blues", direction=-1)
 # Output the figure
-pdf('./01_Drafts/axima_quantity_per_groups_2021.pdf', height = 12, width = 16)
+pdf('./01_Drafts/axima_quantity_per_groups_2021_2.pdf', height = 12, width = 16)
 plot_data_axima_quantity_per_group
 dev.off()
 
@@ -893,7 +902,7 @@ eval<-eval[,!grepl('^prop', colnames(eval))]
 eval<-merge(eval, eval2, by = intersect(colnames(eval), colnames(eval2)), all.x  = T)
 
 # Export this file. This will be ised for the analysis on which spectra features are good endpoints for spectra quality
-write.csv(eval, './08_Data/01_Spectra/04_outputs/spectra_test/eval_sum_clean_2021.csv')
+write.csv(eval, './08_Data/01_Spectra/04_outputs/spectra_test/eval_sum_clean_2021_2.csv')
 
 # Convert the new species identification evaluation (group wise) to the log format
 # Delete file with the same name from previous analysis
@@ -978,6 +987,14 @@ plot_data_bruker_as25$Gram<-gsub('Positive|variable', 'positive', plot_data_bruk
 wilcox.test(plot_data_bruker_as25[grepl('Actinobacteria|Listeria|streptococci|Staphylococci',plot_data_bruker_as25$Group),'value'], 
             plot_data_bruker_as25[grepl("negative|Bordetella|Burkholderia|Enterobacteriaceae", plot_data_bruker_as25$Group),'value'])
 
+wilcox.test(plot_data_bruker_as25[grepl('Actinobacteria|Listeria|streptococci|Staphylococci',plot_data_bruker_as25$Group) & plot_data_bruker_as25$Endpoint == 'Fraction\nof detected\nribosomal\nmarker peaks','value'], 
+            plot_data_bruker_as25[grepl("negative|Bordetella|Burkholderia|Enterobacteriaceae", plot_data_bruker_as25$Group)& plot_data_bruker_as25$Endpoint == 'Fraction\nof detected\nribosomal\nmarker peaks','value'])
+
+wilcox.test(plot_data_bruker_as25[grepl('Actinobacteria|Listeria|streptococci|Staphylococci',plot_data_bruker_as25$Group) & plot_data_bruker_as25$Endpoint == 'Fraction of\nreproducibly\ndetected peaks','value'], 
+            plot_data_bruker_as25[grepl("negative|Bordetella|Burkholderia|Enterobacteriaceae", plot_data_bruker_as25$Group)& plot_data_bruker_as25$Endpoint == 'Fraction of\nreproducibly\ndetected peaks','value'])
+
+wilcox.test(plot_data_bruker_as25[grepl('Actinobacteria|Listeria|streptococci|Staphylococci',plot_data_bruker_as25$Group) & plot_data_bruker_as25$Endpoint == 'Sum of the\nintensity of\nall detected\npeaks','value'], 
+            plot_data_bruker_as25[grepl("negative|Bordetella|Burkholderia|Enterobacteriaceae", plot_data_bruker_as25$Group)& plot_data_bruker_as25$Endpoint == 'Sum of the\nintensity of\nall detected\npeaks','value'])
 
 # Summarise median and IQR per gram and endpoint
 check_gram<-plot_data_bruker_as25 %>% 
@@ -1009,7 +1026,7 @@ f7 <- f5+scale_fill_manual('Identification',
 f7_group_bruker<-f7
 
 # Output the figure
-pdf("./01_Drafts/group.comparison.bruker.nobrukerID.rel.ribo_2021.pdf", width = 12, height = 12) 
+pdf("./01_Drafts/group.comparison.bruker.nobrukerID.rel.ribo_2021_2.pdf", width = 12, height = 12) 
 f7_group_bruker
 dev.off() 
 
@@ -1146,7 +1163,7 @@ for (i in 1:length(unique(as.character(plot_data_bruker_all$Group)))){
                                      rel_widths=c(0.125, 0.2), ncol = 2, align = "h",axis = "b")
   combined_plots_legend<-cowplot::plot_grid(combined_plots, cowplot::get_legend(f7_timeseries_all), ncol = 2, rel_widths = c(0.8, 0.2))
   combines_plots_bruker[[unique(as.character(plot_data_bruker_all$Group))[i]]]<-combined_plots
-  pdf(paste0('./01_Drafts/per_group/bruker/bruker.noBrukerID.no.quantity', unique(as.character(plot_data_bruker_all$Group))[i], '_2021.pdf'), height = 12, width = 15)
+  pdf(paste0('./01_Drafts/per_group/bruker/bruker.noBrukerID.no.quantity.2021-02.', unique(as.character(plot_data_bruker_all$Group))[i], '_2021.pdf'), height = 12, width = 15)
     print(plot_grid(combined_plots, leg.marker, ncol = 1, rel_heights = c(0.9, 0.1)))
   dev.off()
 }
@@ -1192,7 +1209,7 @@ f7 <- f5+scale_fill_manual('Identification',
 f7_group_axima<-f7
 
 # Output figure
-pdf("./01_Drafts/group.comparison.axima.ribo.rel_2021.pdf",  width = 12, height = 12) 
+pdf("./01_Drafts/group.comparison.axima.ribo.rel_2021_02.pdf",  width = 12, height = 12) 
 f7_group_axima
 dev.off() 
 
@@ -1247,7 +1264,7 @@ combined_plots<-cowplot::plot_grid(f7_group_bruker_speciesID +  ggtitle('microfl
                                    f7_group_axima_speciesID +  ggtitle('Axima Confidence') + theme(axis.text=element_text(size=18), axis.title=element_text(size=24),title=element_text(size=18), strip.text = element_text(size=14), legend.position = "none"),
                                    rel_widths=c(0.5, 0.5), ncol = 2, align = "h",axis = "b")
 # Output the combined figure
-pdf("./01_Drafts/group.comparison.species_ID_all_DB_2021.pdf", width = 14, height = 7.2) 
+pdf("./01_Drafts/group.comparison.species_ID_all_DB_2021_02.pdf", width = 14, height = 7.2) 
 combined_plots
 dev.off() 
 
@@ -1341,7 +1358,7 @@ for (i in 1:length(unique(as.character(plot_data_axima_all$Group)))){
                                      rel_widths=c(0.125, 0.2), ncol = 2, align = "h",axis = "b")
   combined_plots_legend<-cowplot::plot_grid(combined_plots, cowplot::get_legend(f7_timeseries_all), ncol = 2, rel_widths = c(0.8, 0.2))
   combines_plots_axima[[unique(as.character(plot_data_axima_all$Group))[i]]]<-combined_plots
-  pdf(paste0('./01_Drafts/per_group/axima/axima.noVitekMSIDID.no.quantity', unique(as.character(plot_data_axima_all$Group))[i], '_2021.pdf'), height = 12, width = 15)
+  pdf(paste0('./01_Drafts/per_group/axima/axima.noVitekMSIDID.no.quantity.2021-02', unique(as.character(plot_data_axima_all$Group))[i], '_2021.pdf'), height = 12, width = 15)
   print(plot_grid(combined_plots, leg.marker, ncol = 1, rel_heights = c(0.9, 0.1)))
   dev.off()
 }
@@ -1351,7 +1368,7 @@ for (i in 1:length(unique(as.character(plot_data_axima_all$Group)))){
 for (names in names(combines_plots_bruker)){
   combined_plots <- cowplot::plot_grid(combines_plots_bruker[[names]], combines_plots_axima[[names]], 
                                        rel_widths=c(0.5, 0.5), ncol = 2, align = "h",axis = "b")
-  pdf(paste0('./01_Drafts/per_group/', names, 'bothDevices_2021.pdf'), height = 12, width = 17)
+  pdf(paste0('./01_Drafts/per_group/', names, 'bothDevices_2021_02.pdf'), height = 12, width = 17)
   print(plot_grid(combined_plots, leg.marker, ncol = 1, rel_heights = c(0.9, 0.1)))
   dev.off()
 }
@@ -1492,12 +1509,12 @@ bruker_better_ID
 # Extract the legend. Returns a gtable
 leg <- get_legend(bruker_better_ID+ theme(legend.position="bottom"))
 
-pdf('./01_Drafts/marker_ID_legend_brukerID_2021.pdf', width= 12, height = 1)
+pdf('./01_Drafts/marker_ID_legend_brukerID_2021_02.pdf', width= 12, height = 1)
 as_ggplot(leg)
 dev.off()
 
 # Output the figure
-pdf('./01_Drafts/bruker_better_ID_quality_level_quality_level_all_features_intensity_groups_2021.pdf', width= 8, height = 14)
+pdf('./01_Drafts/bruker_better_ID_quality_level_quality_level_all_features_intensity_groups_2021_02.pdf', width= 8, height = 14)
 bruker_better_ID
 dev.off()
 
@@ -1552,7 +1569,7 @@ axima_better_ID<-f7+ theme(axis.text=element_text(size=16), axis.title=element_t
 
 axima_better_ID
 # Output the figure
-pdf('./01_Drafts/axima_better_ID_quality_level_quality_level_3_all_features_intensity_groups_intensity_groups_2021.pdf', width= 11, height = 14)
+pdf('./01_Drafts/axima_better_ID_quality_level_quality_level_3_all_features_intensity_groups_intensity_groups_2021_02.pdf', width= 11, height = 14)
 axima_better_ID
 dev.off()
 

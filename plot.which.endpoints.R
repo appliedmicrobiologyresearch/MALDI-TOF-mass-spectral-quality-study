@@ -1,5 +1,5 @@
 # Aline Cuénod, 2020
-# This script compares correctly to incorrectly identified mass spectra. 'Incorrectly identified spectra' include spectra for which the wrong species was assigned of for which no identification was possible). 
+# This script compares correctly to incorrectly identified mass spectra (including spectra for which the wrong species was assigned of for which no identification was possible). 
 # We exclusively include spectra of species which are covered by the MALDI Biotyper, the Vitek MS and the PAPMID database. 
 
 # Load packages
@@ -12,12 +12,13 @@ library('ggpubr')
 
 setwd('')
 
-# Load data. The 'eval_sum_clean.csv' file includes all species identification of the spectra acquired for this study and was exported by the script 'spectra_comparison.R'
-eval_testset<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/eval_sum_clean.csv')
+# Load data. The 'eval_sum_clean.csv' file includes all species identification of the spectra acquired for this study and was exported by the script 'plot_test_comparison.R'
+eval_testset<-read.csv('./08_Data/01_Spectra/04_outputs/spectra_test/eval_sum_clean_2021_2.csv')
+
 eval_testset['frac_high_peaks']<-eval_testset$n_high_peaks / eval_testset$n_peaks
 
 # Set all NA values to 0. This often happens when no ribosomal marker peak / no peak at all was detected
-# Do not set the mean distance to 0, if NA. If no marker peak was detected, the emasurement error cannot be assessed (is truly NA)
+# Do not set the mean distance to 0, if NA. If no marker peak was detected, the measurement error cannot be assessed (is truly NA)
 eval_testset$max_mass_ribo<-ifelse(is.na(eval_testset$max_mass_ribo), 0, as.numeric(as.character(eval_testset$max_mass_ribo)))
 eval_testset$n_peaks<-ifelse(is.na(eval_testset$n_peaks), 0, as.numeric(as.character(eval_testset$n_peaks)))
 eval_testset$highest_peaks<-ifelse(is.na(eval_testset$highest_peaks), 0, as.numeric(as.character(eval_testset$highest_peaks)))
@@ -80,8 +81,17 @@ datacount_repr<-ggplot(eval_ID_noempty, aes(x=n_peaks, y=n_peaks_repr)) + facet_
   geom_smooth() +ylab('Number of peaks, which were detected in at least 3/4 of the technical replicates') +
   xlab('Total Number of Peaks')
 
-pdf('./datacount_repr.pdf', width = 6, height = 10)
+pdf('./01_Drafts/datacount_repr_2021_02.pdf', width = 6, height = 10)
 datacount_repr
+dev.off()
+
+frac_repr<-ggplot(eval_ID_noempty, aes(x=n_peaks, y=frac_peaks_repr)) + facet_grid(Group~MALDI,scales = "free_x") +
+  geom_point(alpha=0.1) +
+  geom_smooth() +ylab('Fraction of peaks, which were detected in at least 3/4 of the technical replicates') +
+  xlab('Total Number of Peaks')
+
+pdf('./01_Drafts/frac_repr_2021_02.pdf', width = 6, height = 10)
+frac_repr
 dev.off()
 
 # Plot the same and exclusively for spectra acquired on a micoflex Biotyper
@@ -90,17 +100,17 @@ datacount_repr_bruker<-ggplot(eval_ID_noempty[eval_ID_noempty$MALDI== 'microflex
   geom_smooth() +ylab('Number of peaks, which were detected\nin at least 3/4 of the technical replicates') +
   xlab('Total Number of Peaks')
 
-pdf('./datacount_repr_bruker.pdf', width = 12, height = 4)
+pdf('./01_Drafts/datacount_repr_bruker_2021_02.pdf', width = 12, height = 4)
 datacount_repr_bruker
 dev.off()
 
-# Plot the same exlusively for Enterobacteriaceae and microflex spectra
+# Plot the same exclusively for Enterobacteriaceae and microflex spectra
 datacount_repr_bruker_entero<-ggplot(eval_ID_noempty[eval_ID_noempty$MALDI== 'microflex Biotyper' & eval_ID_noempty$Group == 'Enterobacteriaceae\n(11 strains)',], aes(x=n_peaks, y=n_peaks_repr)) + facet_grid(.~Group) +
   geom_point(alpha=0.1) +
   geom_smooth() +ylab('Number of peaks, which were detected\nin at least 3/4 of the technical replicates') +
   xlab('Total Number of Peaks')
 
-pdf('./datacount_repr_bruker_entero.pdf', width = 4, height = 4)
+pdf('./01_Drafts/datacount_repr_bruker_entero_2021_02.pdf', width = 4, height = 4)
 datacount_repr_bruker_entero
 dev.off()
 
@@ -110,7 +120,7 @@ datacount_repr_bruker_intensity<-ggplot(eval_ID_noempty[eval_ID_noempty$MALDI== 
   geom_smooth() +ylab('Number of peaks, which were detected\nin at least 3/4 of the technical replicates') +
   xlab('Sum of the intenisty of all detected peaks')
 
-pdf('./datacount_repr_bruker_intensity.pdf', width = 12, height = 4)
+pdf('./01_Drafts/datacount_repr_bruker_intensity_2021_02.pdf', width = 12, height = 4)
 datacount_repr_bruker_intensity
 dev.off()
 
@@ -123,7 +133,7 @@ test<-compare_means(value~ID_correct, eval_long, method = "wilcox.test", paired 
 eval_ID_bruker<-eval_ID_noempty[eval_ID_noempty$MALDI == 'microflex Biotyper' & eval_ID_noempty$n_peaks != 0 & !is.na(eval_ID_noempty$ID_correct),]
 eval_ID_bruker$DB<-factor(eval_ID_bruker$DB, levels =c('Biotyper', 'PAPMID'))
 
-# Number of ribosomal merker masses detected
+# Number of ribosomal marker masses detected
 eval_ID_bruker %>% group_by(ID_correct) %>% summarize(IQR = quantile(n_ribos_detected, probs = c(0.25, 0.5, 0.75), na.rm = T))
 wilcox.test(eval_ID_bruker[eval_ID_bruker$ID_correct == 'Correctly\nidentified\nspectra','n_ribos_detected'], 
             + eval_ID_bruker[eval_ID_bruker$ID_correct == 'Incorrectly\nidentified\nspectra','n_ribos_detected'], paired = F)$p.value
@@ -158,7 +168,7 @@ eval_ID_bruker %>% group_by(ID_correct) %>% summarize(IQR = quantile(mass_90, pr
 wilcox.test(eval_ID_bruker[eval_ID_bruker$ID_correct == 'Correctly\nidentified\nspectra' & eval_ID_bruker$DB == 'Biotyper','mass_90'], 
             + eval_ID_bruker[eval_ID_bruker$ID_correct == 'Incorrectly\nidentified\nspectra' & eval_ID_bruker$DB == 'Biotyper','mass_90'], paired = F)$p.value
 
-# In order to plot the intensities, pseudolog transform them. Use log10 and replace tge '-Inf' values (resulting from values == 0) to 0
+# In order to plot the intensities, pseudolog transform them. Use log10 and replace the '-Inf' values (resulting from values == 0) to 0
 eval_ID_noempty$total_intensity_peaks<-log10(eval_ID_noempty$total_intensity_peaks)
 eval_ID_noempty$total_intensity_peaks<-ifelse(eval_ID_noempty$total_intensity_peaks == '-Inf', 0, eval_ID_noempty$total_intensity_peaks)
 eval_ID_noempty$median_intensity<-log10(eval_ID_noempty$median_intensity)
@@ -279,7 +289,7 @@ bruker_mass_90<-ggplot(eval_ID_bruker, aes(x=Group, y=mass_90, fill= factor(ID_c
   theme_bw() + theme(axis.text.x = element_text(size = 10), axis.title.y = element_text(size = 12), legend.position = 'none') + scale_fill_manual(values = c("#0072B2", "#F0E442"))
 
 # Plot the measurement error for the proker spectra
-pdf('./which.measurement.error.bruker.pdf', width=3, height = 3)
+pdf('./01_Drafts/which.measurement.error.bruker_2021_02.pdf', width=3, height = 3)
 bruker_median_dist
 dev.off()
 
@@ -289,7 +299,7 @@ combined_plots<-cowplot::plot_grid(bruker_n_ribos, bruker_median_ribo_int,
                                    bruker_n_peaks, bruker_mass_90, 
                                    bruker_frac_high_peaks, 
                                    ncol = 1, align = "v",axis = "b")
-pdf('./which.Endpoints.all.bruker.per.group.pdf', width=9, height = 21)
+pdf('./01_Drafts/which.Endpoints.all.bruker.per.group_2021_02.pdf', width=9, height = 21)
 combined_plots
 dev.off()
 
@@ -299,7 +309,7 @@ combined_plots<-cowplot::plot_grid(axi_n_ribos, axi_median_ribo_int,
                                    axi_n_peaks, axi_mass_90, 
                                    axi_frac_high_peaks, 
                                    ncol = 1, align = "v",axis = "b")
-pdf('./which.Endpoints.all.axi.per.group.pdf', width=9, height = 21)
+pdf('./01_Drafts/which.Endpoints.all.axi.per.group_2021_02.pdf', width=9, height = 21)
 combined_plots
 dev.off()
 
@@ -336,12 +346,12 @@ combined_plots<-cowplot::plot_grid(bruker_n_ribos_biotyper,
                                    bruker_median_ribo_int_biotyper,
                                    bruker_total_int_biotyper,
                                    ncol = 1, align = "v",axis = "b")
-pdf('./which.Endpoints.biotyper.group.pdf', width=9, height = 9)
+pdf('./01_Drafts/which.Endpoints.biotyper.group_2021_02.pdf', width=9, height = 9)
 combined_plots
 dev.off()
 
 # Export measurement error for specrta identified by the biotyper
-pdf('./which.measurement.error.bruker.biotyper.pdf', width=3, height = 3)
+pdf('./01_Drafts/which.measurement.error.bruker.biotyper_2021_02.pdf', width=3, height = 3)
 bruker_median_dist_biotyper
 dev.off()
 
